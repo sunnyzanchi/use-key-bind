@@ -1,0 +1,28 @@
+{
+  "name": "@zanchi/use-key-bind",
+  "version": "1.0.0",
+  "description": "Run a callback when key(s) are pressed",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "hooks",
+    "keybind",
+    "keyboard",
+    "preact",
+    "react"
+  ],
+  "author": "Zanchi <zanchi@hey.com> (https://github.com/zanchi)",
+  "license": "ISC",
+  "sideEffects": false,
+  "dependencies": {
+    "react": ">=16.8.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.5",
+    "typescript": "^4.6.3"
+  }
+}
