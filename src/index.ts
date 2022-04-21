@@ -95,7 +95,7 @@ const useKeyEvent =
 
     const listeners = configs.map(({ key, ...modifiers }) => {
       const listener = (e: KeyboardEvent) => {
-        if (e.key.toLowerCase() !== key.toLowerCase()) return
+        if (e.key.toLowerCase() !== key) return
 
         const correctModifiers = (
           Object.entries(modifiers) as [keyof KeyConfigModifiers, boolean][]
