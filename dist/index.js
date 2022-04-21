@@ -3,10 +3,11 @@ import { useEffect } from 'react';
  * get a string like `'Ctrl + Z'` and give back
  * a more convenient data structure for the keydown listener.
  */
-const parseKeyString = (str) => {
+const parseKeyString = (eventName) => (str) => {
     const keys = str.split('+').map((s) => s.trim());
     const modifiers = new Set(keys.slice(0, -1).map((k) => k.toLowerCase()));
-    const key = keys.pop();
+    // we don't care if the user types `Ctrl + Z` or `Ctrl + z`.
+    const key = keys.pop()?.toLowerCase();
     if (key == null) {
         if (process.env.NODE_ENV === 'development') {
             console.warn(`Invalid key config string: \`${str}\`.`);
@@ -14,13 +15,27 @@ const parseKeyString = (str) => {
         }
         return null;
     }
+    if (eventName === 'keyup') {
+        return {
+            altKey: modifiers.has('alt'),
+            metaKey: modifiers.has('cmd'),
+            ctrlKey: modifiers.has('ctrl'),
+            shiftKey: modifiers.has('shift'),
+            key,
+        };
+    }
+    // if a user wants to bind a modifier key alone,
+    // like `useKeyBind(['Control'], ...)`
+    // we set the associated modifier to true,
+    // since the KeyboardEvent will have it as true.
+    // this is only true for 'keydown' events,
+    // so above we don't do this check.
     return {
-        altKey: modifiers.has('alt'),
-        metaKey: modifiers.has('cmd'),
-        ctrlKey: modifiers.has('ctrl'),
-        shiftKey: modifiers.has('shift'),
-        // we don't care if the user types `Ctrl + Z` or `Ctrl + z`.
-        key: key.toLowerCase(),
+        altKey: modifiers.has('alt') || key === 'alt',
+        metaKey: modifiers.has('cmd') || key === 'meta',
+        ctrlKey: modifiers.has('ctrl') || key === 'control',
+        shiftKey: modifiers.has('shift') || key === 'shift',
+        key,
     };
 };
 const useKeyEvent = (eventName) => (
@@ -52,7 +67,7 @@ dependencies) => {
      * for Mac and Windows.
      */
     const configs = keyStrings
-        .map(parseKeyString)
+        .map(parseKeyString(eventName))
         .filter((c) => c != null);
     // we didn't get any properly configured key bind configs.
     if (configs.length === 0) {
@@ -63,7 +78,7 @@ dependencies) => {
     }
     const listeners = configs.map(({ key, ...modifiers }) => {
         const listener = (e) => {
-            if (e.key.toLowerCase() !== key.toLowerCase())
+            if (e.key.toLowerCase() !== key)
                 return;
             const correctModifiers = Object.entries(modifiers).reduce((acc, [property, required]) => acc && e[property] === required, true);
             if (!correctModifiers)
