@@ -46,6 +46,86 @@ const parseKeyString = (str: string): KeyConfig | null => {
   }
 }
 
+const useKeyEvent =
+  (eventName: 'keydown' | 'keyup') =>
+  (
+    /**
+     * string format for a key or key combination,
+     * like `['4']`, `['Shift + Alt + Enter']`, or `['Cmd + Z', 'Ctrl + Z']`.
+     *
+     * supported modifiers are
+     *
+     * `Alt`
+     * `Cmd`
+     * `Ctrl`
+     * `Shift`
+     */
+    keyStrings: string[],
+    /**
+     * function to call when the keys specified in `keyStrings` are pressed.
+     */
+    cb: (e: KeyboardEvent) => unknown,
+    /**
+     * this may not be needed in some cases.
+     * it's a gotcha if you have dependencies but leave them out
+     * because it won't error or show a lint error but it definitely won't work.
+     */
+    dependencies: DependencyList
+  ): boolean => {
+    /**
+     * most key binds only need one `keyString`, but it's useful
+     * to be able to specify multiple, like `Cmd + Z` and `Ctrl + Z`
+     * for Mac and Windows.
+     */
+    const configs = keyStrings
+      .map(parseKeyString)
+      .filter((c): c is KeyConfig => c != null)
+
+    // we didn't get any properly configured key bind configs.
+    if (configs.length === 0) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(
+          `couldn't parse any of the provided keyString(s). \`keyStrings\`:`,
+          keyStrings
+        )
+      }
+
+      return false
+    }
+
+    const listeners = configs.map(({ key, ...modifiers }) => {
+      const listener = (e: KeyboardEvent) => {
+        if (e.key.toLowerCase() !== key.toLowerCase()) return
+
+        const correctModifiers = (
+          Object.entries(modifiers) as [keyof KeyConfigModifiers, boolean][]
+        ).reduce(
+          (acc: boolean, [property, required]) =>
+            acc && e[property] === required,
+          true
+        )
+
+        if (!correctModifiers) return
+        cb(e)
+      }
+
+      return listener
+    })
+
+    useEffect(() => {
+      listeners.forEach((listener) =>
+        document.addEventListener(eventName, listener)
+      )
+
+      return () =>
+        listeners.forEach((listener) =>
+          document.removeEventListener(eventName, listener)
+        )
+    }, [keyStrings, cb, ...dependencies])
+
+    return true
+  }
+
 /**
  * run a callback when the user presses some key or key combination.
  * your callback eventually gets passed down to
@@ -63,82 +143,12 @@ const parseKeyString = (str: string): KeyConfig | null => {
  * if it fails to parse any of the `keyString`s, this returns `false`.
  * otherwise it returns `true`.
  */
-const useKeyBind = (
-  /**
-   * string format for a key or key combination,
-   * like `['4']`, `['Shift + Alt + Enter']`, or `['Cmd + Z', 'Ctrl + Z']`.
-   *
-   * supported modifiers are
-   *
-   * `Alt`
-   * `Cmd`
-   * `Ctrl`
-   * `Shift`
-   */
-  keyStrings: string[],
-  /**
-   * function to call when the keys specified in `keyStrings` are pressed.
-   */
-  cb: (e: KeyboardEvent) => unknown,
-  /**
-   * this may not be needed in some cases.
-   * it's a gotcha if you have dependencies but leave them out
-   * because it won't error or show a lint error but it definitely won't work.
-   */
-  dependencies: DependencyList
-): boolean => {
-  /**
-   * most key binds only need one `keyString`, but it's useful
-   * to be able to specify multiple, like `Cmd + Z` and `Ctrl + Z`
-   * for Mac and Windows.
-   */
-  const configs = keyStrings
-    .map(parseKeyString)
-    .filter((c): c is KeyConfig => c != null)
+const useKeyBind = useKeyEvent('keydown')
 
-  // we didn't get any properly configured key bind configs.
-  if (configs.length === 0) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn(
-        `couldn't parse any of the provided keyString(s). \`keyStrings\`:`,
-        keyStrings
-      )
-    }
-
-    return false
-  }
-
-  const listeners = configs.map(({ key, ...modifiers }) => {
-    const listener = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() !== key.toLowerCase()) return
-
-      const correctModifiers = (
-        Object.entries(modifiers) as [keyof KeyConfigModifiers, boolean][]
-      ).reduce(
-        (acc: boolean, [property, required]) => acc && e[property] === required,
-        true
-      )
-
-      if (!correctModifiers) return
-      cb(e)
-    }
-
-    return listener
-  })
-
-  useEffect(() => {
-    listeners.forEach((listener) =>
-      document.addEventListener('keydown', listener)
-    )
-
-    return () =>
-      listeners.forEach((listener) =>
-        document.removeEventListener('keydown', listener)
-      )
-  }, [keyStrings, cb, ...dependencies])
-
-  return true
-}
+/**
+ * same as `useKeyBind` but attaches your callback to the `'keyup'` event.
+ */
+const useKeyUp = useKeyEvent('keyup')
 
 export default useKeyBind
-export { useKeyBind }
+export { useKeyBind, useKeyUp }

@@ -17,5 +17,9 @@ import { DependencyList } from 'react';
  * otherwise it returns `true`.
  */
 declare const useKeyBind: (keyStrings: string[], cb: (e: KeyboardEvent) => unknown, dependencies: DependencyList) => boolean;
+/**
+ * same as `useKeyBind` but attaches your callback to the `'keyup'` event.
+ */
+declare const useKeyUp: (keyStrings: string[], cb: (e: KeyboardEvent) => unknown, dependencies: DependencyList) => boolean;
 export default useKeyBind;
-export { useKeyBind };
+export { useKeyBind, useKeyUp };

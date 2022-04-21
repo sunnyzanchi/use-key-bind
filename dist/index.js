@@ -23,24 +23,7 @@ const parseKeyString = (str) => {
         key: key.toLowerCase(),
     };
 };
-/**
- * run a callback when the user presses some key or key combination.
- * your callback eventually gets passed down to
- * `document.addEventListener('keydown', listener)`.
- *
- * @example
- * ```ts
- * useKeyBind(['Cmd + Z', 'Ctrl + Z'], (e: KeyboardEvent) => {
- *   const state = getThePreviousStateFromSomewhere()
- *   setState(state)
- * }, [])
- * ```
- *
- * @returns
- * if it fails to parse any of the `keyString`s, this returns `false`.
- * otherwise it returns `true`.
- */
-const useKeyBind = (
+const useKeyEvent = (eventName) => (
 /**
  * string format for a key or key combination,
  * like `['4']`, `['Shift + Alt + Enter']`, or `['Cmd + Z', 'Ctrl + Z']`.
@@ -90,10 +73,32 @@ dependencies) => {
         return listener;
     });
     useEffect(() => {
-        listeners.forEach((listener) => document.addEventListener('keydown', listener));
-        return () => listeners.forEach((listener) => document.removeEventListener('keydown', listener));
+        listeners.forEach((listener) => document.addEventListener(eventName, listener));
+        return () => listeners.forEach((listener) => document.removeEventListener(eventName, listener));
     }, [keyStrings, cb, ...dependencies]);
     return true;
 };
+/**
+ * run a callback when the user presses some key or key combination.
+ * your callback eventually gets passed down to
+ * `document.addEventListener('keydown', listener)`.
+ *
+ * @example
+ * ```ts
+ * useKeyBind(['Cmd + Z', 'Ctrl + Z'], (e: KeyboardEvent) => {
+ *   const state = getThePreviousStateFromSomewhere()
+ *   setState(state)
+ * }, [])
+ * ```
+ *
+ * @returns
+ * if it fails to parse any of the `keyString`s, this returns `false`.
+ * otherwise it returns `true`.
+ */
+const useKeyBind = useKeyEvent('keydown');
+/**
+ * same as `useKeyBind` but attaches your callback to the `'keyup'` event.
+ */
+const useKeyUp = useKeyEvent('keyup');
 export default useKeyBind;
-export { useKeyBind };
+export { useKeyBind, useKeyUp };
