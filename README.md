@@ -38,6 +38,9 @@ supported modifiers are:
 - `Ctrl`
 - `Shift`
 
+> note: to add a keybind for Control or Command,
+> use the full key name, 'Control' or 'Meta'.
+
 ```js
 // these are valid `keyString`s
 const keyStrings = ['4', 'Tab', 'shift + tab' 'Shift + Alt + g', 'cmd + Z', 'Ctrl + Z']

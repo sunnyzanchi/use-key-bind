@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 const parseKeyString = (str) => {
     const keys = str.split('+').map((s) => s.trim());
     const modifiers = new Set(keys.slice(0, -1).map((k) => k.toLowerCase()));
-    const key = keys.pop();
+    const key = keys.pop()?.toLowerCase();
     if (key == null) {
         if (process.env.NODE_ENV === 'development') {
             console.warn(`Invalid key config string: \`${str}\`.`);
@@ -15,12 +15,12 @@ const parseKeyString = (str) => {
         return null;
     }
     return {
-        altKey: modifiers.has('alt'),
-        metaKey: modifiers.has('cmd'),
-        ctrlKey: modifiers.has('ctrl'),
-        shiftKey: modifiers.has('shift'),
+        altKey: modifiers.has('alt') || key === 'alt',
+        metaKey: modifiers.has('cmd') || key === 'meta',
+        ctrlKey: modifiers.has('ctrl') || key === 'control',
+        shiftKey: modifiers.has('shift') || key === 'shift',
         // we don't care if the user types `Ctrl + Z` or `Ctrl + z`.
-        key: key.toLowerCase(),
+        key,
     };
 };
 const useKeyEvent = (eventName) => (
@@ -63,7 +63,7 @@ dependencies) => {
     }
     const listeners = configs.map(({ key, ...modifiers }) => {
         const listener = (e) => {
-            if (e.key.toLowerCase() !== key.toLowerCase())
+            if (e.key.toLowerCase() !== key)
                 return;
             const correctModifiers = Object.entries(modifiers).reduce((acc, [property, required]) => acc && e[property] === required, true);
             if (!correctModifiers)
