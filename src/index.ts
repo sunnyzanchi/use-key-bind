@@ -1,4 +1,4 @@
-import { DependencyList, useEffect } from 'react'
+import { useEffect } from 'react'
 
 /**
  * the modifier keys are named after their property name on KeyboardEvent.
@@ -88,7 +88,7 @@ const useKeyEvent =
      * it's a gotcha if you have dependencies but leave them out
      * because it won't error or show a lint error but it definitely won't work.
      */
-    dependencies: DependencyList
+    dependencies: unknown[]
   ): boolean => {
     /**
      * most key binds only need one `keyString`, but it's useful
